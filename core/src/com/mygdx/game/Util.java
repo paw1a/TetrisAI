@@ -12,14 +12,15 @@ public class Util {
 
     public static final int SCALE = 2;
 
-    public static final int PARENTS_NUMBER = 500;
-    public static final int CHILDREN_NUMBER = 1000;
-    public static final double MUTATION_RATE = 0.05;
-    public static final double ETA = 100;
+    public static final int REPLAY_NUMBER = 50;
 
-    public static int random(int value) {
-        return ((((value >> 9) & 1) ^ ((value >> 1) & 1)) << 15) | (value >> 1);
-    }
+    public static final int PLAY_MODE = 0;
+    public static final int LEARNING_MODE = 1;
+    public static final int LEARNING_DEMO_MODE = 2;
+    public static final int DEMO_AI_MODE = 3;
+
+    public static final int BATCH_SIZE = 512;
+    public static final int EPOCHS = 1;
 
     public static int[][][][] loadFigures() {
         int[][][][] figures = new int[7][4][5][5];
@@ -51,5 +52,15 @@ public class Util {
         if(level >= 19 && level <= 28) return 2;
         if(level >= 29) return 1;
         return -1;
+    }
+
+    public static int scoreFunc(int level, int linesCleared) {
+        switch (linesCleared) {
+            case 1: return 40 * (level + 1);
+            case 2: return 100 * (level + 1);
+            case 3: return 300 * (level + 1);
+            case 4: return  1200 * (level + 1);
+        }
+        return 0;
     }
 }

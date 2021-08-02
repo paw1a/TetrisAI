@@ -21,10 +21,12 @@ import org.deeplearning4j.nn.modelimport.keras.exceptions.InvalidKerasConfigurat
 import org.deeplearning4j.nn.modelimport.keras.exceptions.UnsupportedKerasConfigurationException;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
+import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.learning.config.Nadam;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
 
@@ -53,6 +55,8 @@ public class Main extends ApplicationAdapter {
 
 		if(GAME_MODE == Util.PLAY_MODE)
 			game = new Tetris();
+		else if(GAME_MODE == Util.DEMO_AI_MODE)
+			game = new Tetris(loadModel("C:/Users/paw1a/IdeaProjects/libgdx/TetrisAI/core/assets/best_model.txt"));
 		else game = new Tetris(buildModel());
 		render = true;
 	}
@@ -78,7 +82,7 @@ public class Main extends ApplicationAdapter {
 			font.getData().setScale(0.7f, 0.8f);
 			font.draw(batch, "STATISTICS", 80, 640);
 			font.getData().setScale(1f);
-			font.draw(batch, "A-TYPE", 96, 796);
+			font.draw(batch, "E." + game.episode, 96, 796);
 			font.draw(batch, String.format(Locale.ENGLISH, "LINES-%03d", game.lines), 404, 828);
 			font.draw(batch, "TOP", 770, 796);
 			font.draw(batch, "010000", 770, 764);
@@ -93,7 +97,7 @@ public class Main extends ApplicationAdapter {
 				for (int j = 0; j < 5; j++) {
 					for (int k = 0; k < 5; k++) {
 						if (Util.FIGURES[i][0][j][k] != 0)
-							batch.draw(game.levelColors[game.level][i % 3], 80 + k * 24, 600 - i * 70 - j * 24, 24, 24);
+							batch.draw(game.levelColors[game.level % 30][i % 3], 80 + k * 24, 600 - i * 70 - j * 24, 24, 24);
 					}
 				}
 				font.draw(batch, String.format(Locale.ENGLISH, "%03d", game.spawnedFigures[i]), 200, 570 - i * 70);
@@ -101,7 +105,7 @@ public class Main extends ApplicationAdapter {
 			for (int j = 0; j < 5; j++) {
 				for (int k = 0; k < 5; k++) {
 					if (Util.FIGURES[game.nextFigure.type.ordinal()][0][j][k] != 0)
-						batch.draw(game.levelColors[game.level][game.nextFigure.color.ordinal()], 766 + k * 30,
+						batch.draw(game.levelColors[game.level % 30][game.nextFigure.color.ordinal()], 766 + k * 30,
 								470 - j * 30, 30, 30);
 				}
 			}
@@ -120,6 +124,14 @@ public class Main extends ApplicationAdapter {
 		} catch (IOException | UnsupportedKerasConfigurationException | InvalidKerasConfigurationException e) {
 			e.printStackTrace();
 		}
+		return null;
+	}
+
+	private MultiLayerNetwork loadModel(String name) {
+		File file = new File(name);
+		try {
+			return ModelSerializer.restoreMultiLayerNetwork(file);
+		} catch (IOException e) {e.printStackTrace(); }
 		return null;
 	}
 	

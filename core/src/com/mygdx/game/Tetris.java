@@ -12,12 +12,15 @@ import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
+import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.learning.config.Nadam;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -43,7 +46,7 @@ public class Tetris {
 
     public MultiLayerNetwork model;
     private final List<StateTransition> memoryReplay;
-    private static int episode;
+    public static int episode;
     private double epsilon;
     public boolean learning;
     private double[] currentState;
@@ -65,9 +68,9 @@ public class Tetris {
     }
 
     private void initGraphics() {
-        levelColors = new TextureRegion[40][3];
+        levelColors = new TextureRegion[30][3];
         Texture tileset = new Texture("tetris.png");
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 30; i++) {
             for (int j = 0; j < 3; j++) {
                 levelColors[i][j] = new TextureRegion(tileset, j * 16, i * 16, 16, 16);
             }
@@ -121,10 +124,20 @@ public class Tetris {
                     if(memoryReplay.size() > 20000) memoryReplay.remove(0);
 
                     currentState = bestState.state;
+
+                    lines += (int) bestState.state[3];
+                    if (lines >= (level + 1) * 10) level++;
+                    score += Util.scoreFunc(level, (int) bestState.state[3]);
                 } else break;
             }
+            try {
+                File file = new File("C:/Users/paw1a/IdeaProjects/libgdx/TetrisAI/core/assets/models/" + episode + "_" + score + ".txt");
+                boolean created = file.createNewFile();
+                ModelSerializer.writeModel(model, file, true);
+            } catch (IOException e) { e.printStackTrace(); }
+
             episode++;
-            epsilon -= 0.002;
+            epsilon -= 1f / 1500;
             System.out.println(episode);
             train();
         }
@@ -182,8 +195,10 @@ public class Tetris {
 
             if (lines >= (level + 1) * 10) level++;
         } else {
-            if(learningThread == null || learningThread.getState() == Thread.State.TERMINATED) {
+            if(learningThread == null || learningThread.getState() == Thread.State.TERMINATED || Main.GAME_MODE == Util.DEMO_AI_MODE) {
                 if (currentFigure.y == 0) {
+                    spawnedFigures[currentFigure.type.ordinal()]++;
+
                     List<StateAction> generatedStates = generateStates(currentFigure, field);
                     Collections.shuffle(generatedStates);
                     StateAction bestState = generatedStates
@@ -194,17 +209,23 @@ public class Tetris {
                     moveFigure(currentFigure, field, 0, -currentFigure.y);
                 }
                 if (!dropFigure(currentFigure, field)) {
-                    clearLines(field);
+                    int linesCleared = clearLines(field);
                     currentFigure = nextFigure;
                     if (!isValid(currentFigure, field)) {
                         initGame();
+                        if(Main.GAME_MODE == Util.DEMO_AI_MODE) return;
+
                         learningThread = new Thread(this::makeGameReplays);
                         learningThread.start();
                         episode++;
-                        epsilon -= 0.002;
+                        epsilon -= 1f / 1500;
                         return;
                     }
                     nextFigure = generateNextFigure();
+
+                    score += Util.scoreFunc(level, linesCleared);
+                    lines += linesCleared;
+                    if (lines >= (level + 1) * 10) level++;
                 }
             }
         }
@@ -413,13 +434,13 @@ public class Tetris {
         for (int i = 2; i < 22; i++) {
             for (int j = 0; j < 10; j++) {
                 if(field[i][j] != 0)
-                    batch.draw(levelColors[level][field[i][j] - 1], (12 + j) * 16 * Util.SCALE, (24 - i) * 16 * Util.SCALE,
+                    batch.draw(levelColors[level % 30][field[i][j] - 1], (12 + j) * 16 * Util.SCALE, (24 - i) * 16 * Util.SCALE,
                             16 * Util.SCALE, 16 * Util.SCALE);
             }
         }
         for(Tile tile : currentFigure.tiles) {
             if(tile.y < 2) continue;
-            batch.draw(levelColors[level][tile.color.ordinal()], (12 + tile.x) * 16 * Util.SCALE, (24 - tile.y) * 16 * Util.SCALE,
+            batch.draw(levelColors[level % 30][tile.color.ordinal()], (12 + tile.x) * 16 * Util.SCALE, (24 - tile.y) * 16 * Util.SCALE,
                     16 * Util.SCALE, 16 * Util.SCALE);
         }
     }

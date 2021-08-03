@@ -16,8 +16,7 @@ public class Util {
 
     public static final int PLAY_MODE = 0;
     public static final int LEARNING_MODE = 1;
-    public static final int LEARNING_DEMO_MODE = 2;
-    public static final int DEMO_AI_MODE = 3;
+    public static final int DEMO_AI_MODE = 2;
 
     public static final int BATCH_SIZE = 512;
     public static final int EPOCHS = 1;

@@ -10,8 +10,8 @@ public class DesktopLauncher {
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
 		config.width = 512 * Util.SCALE;
 		config.height = 448 * Util.SCALE;
-		config.foregroundFPS = 200;
-		config.backgroundFPS = 200;
+		config.foregroundFPS = 60;
+		config.backgroundFPS = 60;
 		config.vSyncEnabled = false;
 		config.useGL30 = false;
 		new LwjglApplication(new Main(Util.DEMO_AI_MODE), config);

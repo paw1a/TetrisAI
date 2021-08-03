@@ -7,28 +7,16 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.ScreenUtils;
-import com.mygdx.game.ai.NeuralNetwork;
-import org.deeplearning4j.nn.api.OptimizationAlgorithm;
-import org.deeplearning4j.nn.conf.GradientNormalization;
-import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
-import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
-import org.deeplearning4j.nn.conf.layers.DenseLayer;
-import org.deeplearning4j.nn.conf.layers.OutputLayer;
-import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.modelimport.keras.KerasModelImport;
-import org.deeplearning4j.nn.modelimport.keras.KerasSequentialModel;
 import org.deeplearning4j.nn.modelimport.keras.exceptions.InvalidKerasConfigurationException;
 import org.deeplearning4j.nn.modelimport.keras.exceptions.UnsupportedKerasConfigurationException;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
-import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.util.ModelSerializer;
-import org.nd4j.linalg.activations.Activation;
-import org.nd4j.linalg.learning.config.Nadam;
-import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
+import java.util.Objects;
 
 public class Main extends ApplicationAdapter {
 
@@ -39,7 +27,6 @@ public class Main extends ApplicationAdapter {
 	private BitmapFont font;
 
 	public static int GAME_MODE;
-	public static boolean render;
 
 	public Main(int gameMode) {
 		GAME_MODE = gameMode;
@@ -55,10 +42,12 @@ public class Main extends ApplicationAdapter {
 
 		if(GAME_MODE == Util.PLAY_MODE)
 			game = new Tetris();
-		else if(GAME_MODE == Util.DEMO_AI_MODE)
-			game = new Tetris(loadModel("C:/Users/paw1a/IdeaProjects/libgdx/TetrisAI/core/assets/best_model.txt"));
+		else if(GAME_MODE == Util.DEMO_AI_MODE) {
+			// REPLACE PATH TO YOUR KERAS MODEL
+			game = new Tetris(loadModel(Gdx.files.internal("").file().getAbsolutePath() + "/core/assets/best_model.txt"));
+			Gdx.graphics.setForegroundFPS(200);
+		}
 		else game = new Tetris(buildModel());
-		render = true;
 	}
 
 	@Override
@@ -82,7 +71,7 @@ public class Main extends ApplicationAdapter {
 			font.getData().setScale(0.7f, 0.8f);
 			font.draw(batch, "STATISTICS", 80, 640);
 			font.getData().setScale(1f);
-			font.draw(batch, "E." + game.episode, 96, 796);
+			font.draw(batch, "E." + Tetris.episode, 96, 796);
 			font.draw(batch, String.format(Locale.ENGLISH, "LINES-%03d", game.lines), 404, 828);
 			font.draw(batch, "TOP", 770, 796);
 			font.draw(batch, "010000", 770, 764);
@@ -117,7 +106,8 @@ public class Main extends ApplicationAdapter {
 	private MultiLayerNetwork buildModel() {
 		try {
 			MultiLayerNetwork model = KerasModelImport
-					.importKerasSequentialModelAndWeights("C:/Users/paw1a/IdeaProjects/libgdx/TetrisAI/core/assets/keras-model-import.h5");
+					.importKerasSequentialModelAndWeights(Gdx.files.internal("").file().getAbsolutePath()
+							+ "/core/assets/keras-model-import.h5");
 			model.setInputMiniBatchSize(Util.BATCH_SIZE);
 			model.setEpochCount(Util.EPOCHS);
 			return model;

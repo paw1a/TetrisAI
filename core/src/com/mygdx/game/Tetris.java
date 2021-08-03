@@ -5,24 +5,17 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.mygdx.game.ai.NeuralNetwork;
-import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
-import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
-import org.deeplearning4j.nn.conf.layers.DenseLayer;
-import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
-import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.util.ModelSerializer;
-import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
-import org.nd4j.linalg.learning.config.Nadam;
-import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class Tetris {
 
@@ -31,7 +24,6 @@ public class Tetris {
     private int dxCounter;
 
     private boolean movingDown = true;
-    public boolean isGameOver;
 
     public TextureRegion[][] levelColors;
     public int[][] field;
@@ -39,7 +31,6 @@ public class Tetris {
     public Figure currentFigure;
     public Figure nextFigure;
 
-    //Statistics
     public int lines;
     public int[] spawnedFigures;
     public int score;
@@ -78,7 +69,6 @@ public class Tetris {
     }
 
     private void initGame() {
-        isGameOver = false;
         score = 0;
         lines = 0;
         level = 0;
@@ -131,7 +121,8 @@ public class Tetris {
                 } else break;
             }
             try {
-                File file = new File("C:/Users/paw1a/IdeaProjects/libgdx/TetrisAI/core/assets/models/" + episode + "_" + score + ".txt");
+                File file = new File(Gdx.files.internal("").file().getAbsolutePath()
+                        + "/core/assets/models/" + episode + "_" + score + ".txt");
                 boolean created = file.createNewFile();
                 ModelSerializer.writeModel(model, file, true);
             } catch (IOException e) { e.printStackTrace(); }
@@ -161,7 +152,7 @@ public class Tetris {
 
                 if(!dropFigure(currentFigure, field)) {
                     currentFigure = nextFigure;
-                    if(!isValid(currentFigure, field)) isGameOver = true;
+                    if(!isValid(currentFigure, field)) initGame();
 
                     spawnedFigures[currentFigure.type.ordinal()]++;
                     nextFigure = generateNextFigure();
@@ -262,8 +253,6 @@ public class Tetris {
 
             x[i] = transition.prevState;
             y[i] = new double[] {q};
-            //System.out.println(model.output(vectorData(transition.prevState)).getDouble(0));
-            //System.out.println(model.params());
         }
         model.fit(Nd4j.createFromArray(x), Nd4j.createFromArray(y));
     }
